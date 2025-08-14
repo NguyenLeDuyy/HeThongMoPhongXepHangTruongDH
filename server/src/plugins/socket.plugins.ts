@@ -6,7 +6,7 @@ import { getChalk } from '@/utils/helpers'
 // TIP: keep prisma import if you need it later
 // import prisma from '@/database'
 
-export const socketPlugin = fastifyPlugin(async (fastify) => {
+export const socketPlugin = fastifyPlugin(async (fastify, opts) => {
   const chalk = await getChalk()
 
   /* -------- PUBLIC namespace: KHÔNG auth -------- */

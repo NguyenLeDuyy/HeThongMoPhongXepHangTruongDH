@@ -28,12 +28,12 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
   fastify.get('/:queueId', {
     schema: {
       tags: ['Queues'],
-      summary: 'Lấy chi tiết một hàng đợi',
-      params: QueueIdParam,
+      summary: 'Lấy thông tin chi tiết một hàng đợi',
+      params: QueueIdParam, // Đảm bảo QueueIdParam được import và sử dụng đúng
     },
     handler: async (request, reply) => {
-      const { queueId } = request.params as { queueId: string };
-      const queue = await getQueueDetails(queueId);
+      const { queueId } = request.params as any;
+      const queue = await getQueueById(queueId);
       reply.send({
         message: 'Lấy thông tin hàng đợi thành công',
         data: queue,

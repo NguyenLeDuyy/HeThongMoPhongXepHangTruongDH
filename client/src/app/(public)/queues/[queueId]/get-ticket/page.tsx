@@ -9,19 +9,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateTicketBody, CreateTicketBodyType } from '@/schemaValidations/queue.schema';
 import { useMutation } from '@tanstack/react-query';
 import http from '@/lib/http';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { handleErrorApi } from '@/lib/utils';
 import { toast } from '@/components/ui/use-toast';
 
 export default function GetTicketPage() {
   const params = useParams();
-  const router = useRouter();
   const queueId = params.queueId as string;
 
   const form = useForm<CreateTicketBodyType>({
     resolver: zodResolver(CreateTicketBody),
     defaultValues: {
-      queueId: queueId,
       studentName: '',
       mssv: '',
     },
@@ -39,8 +37,6 @@ export default function GetTicketPage() {
         title: 'Thành công',
         description: `Bạn đã lấy số thành công! Số của bạn là ${result.payload.data.number}`,
       });
-      // Chuyển hướng đến trang xem trạng thái vé (tùy chọn)
-      // router.push(`/tickets/${result.payload.data.id}`);
       form.reset();
     } catch (error) {
       handleErrorApi({ error, setError: form.setError });
@@ -55,11 +51,7 @@ export default function GetTicketPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              className="space-y-4"
-              noValidate
-              onSubmit={form.handleSubmit(onSubmit)}
-            >
+            <form className="space-y-4" noValidate onSubmit={form.handleSubmit(onSubmit)}>
               <FormField
                 control={form.control}
                 name="studentName"

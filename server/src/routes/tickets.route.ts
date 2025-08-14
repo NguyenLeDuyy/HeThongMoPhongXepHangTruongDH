@@ -17,7 +17,7 @@ export default async function ticketsRoutes(fastify: FastifyInstance, options: F
       const ticket = await createTicket(queueId, request.body as any);
 
       // Gửi sự kiện real-time
-      fastify.io.to(queueId).emit('ticket-created', ticket);
+      fastify.emitQueue(queueId, 'ticket-created', ticket);
 
       reply.status(201).send({
         message: 'Lấy vé thành công',
@@ -40,7 +40,7 @@ export default async function ticketsRoutes(fastify: FastifyInstance, options: F
       const ticket = await callNextTicket(queueId, staffId);
 
       // Gửi sự kiện real-time
-      fastify.io.to(queueId).emit('ticket-called', ticket);
+      fastify.emitQueue(queueId, 'ticket-called', ticket);
 
       reply.send({
         message: `Đã gọi vé số ${ticket.number}`,

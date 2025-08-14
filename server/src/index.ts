@@ -1,6 +1,7 @@
 // server/src/index.ts
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import socketio from 'fastify-socket.io';
 
 import { socketPlugin } from '@/plugins/socket.plugins';
 import queueRoutes from '@/routes/queues.route';
@@ -21,10 +22,18 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // 2) Đăng ký Socket.IO namespaces (/public, /staff) TRƯỚC routes
+  // 2. Đăng ký plugin socket.io chính
+  await fastify.register(socketio, {
+    cors: {
+      origin: [CLIENT_URL],
+      credentials: true
+    }
+  });
+
+  // 3. Bây giờ mới đăng ký plugin tùy chỉnh
   await fastify.register(socketPlugin);
 
-  // 3) REST routes
+  // 4. Đăng ký các routes
   await fastify.register(queueRoutes);
   await fastify.register(ticketRoutes);
 
