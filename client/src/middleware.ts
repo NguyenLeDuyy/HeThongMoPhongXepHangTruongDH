@@ -19,6 +19,11 @@ export function middleware(request: NextRequest) {
     const accessToken = request.cookies.get('accessToken')?.value
     const refreshToken = request.cookies.get('refreshToken')?.value
 
+    // Bypass API và static assets
+  if (pathname.startsWith('/api') || pathname.startsWith('/_next') || pathname === '/favicon.ico') {
+    return NextResponse.next()
+  }
+
 
     // 1. Chưa đăng nhập thì không cho vào private Paths
     if (privatePaths.some(path => pathname.startsWith(path) && !refreshToken)) {

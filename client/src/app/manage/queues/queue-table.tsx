@@ -4,7 +4,6 @@ import http from '@/lib/http';
 import { Button } from '@/components/ui/button';
 import { useCallback } from 'react';
 import Link from 'next/link';
-import { toast } from '@/components/ui/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function QueueTable() {
