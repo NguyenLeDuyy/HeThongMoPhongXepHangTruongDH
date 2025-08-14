@@ -6,7 +6,7 @@ import {
   getQueues,
   updateQueue,
 } from '@/controllers/queue.controller';
-import { CreateQueueBody, QueueIdParam, UpdateQueueBody } from '@/schemaValidations/queue.schema';
+import { CreateQueueBody, QueueIdParam, QueueIdParamType, UpdateQueueBody } from '@/schemaValidations/queue.schema';
 
 export default async function queuesRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   // Lấy danh sách tất cả hàng đợi
@@ -29,11 +29,13 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
     schema: {
       tags: ['Queues'],
       summary: 'Lấy thông tin chi tiết một hàng đợi',
-      params: QueueIdParam, // Đảm bảo QueueIdParam được import và sử dụng đúng
+      params: QueueIdParam,
     },
     handler: async (request, reply) => {
-      const { queueId } = request.params as any;
-      const queue = await getQueueById(queueId);
+      // Sử dụng type đã import để code an toàn hơn, không cần 'as any'
+      const { queueId } = request.params as QueueIdParamType;
+      // SỬA LẠI: Gọi hàm getQueueDetails đã import từ controller
+      const queue = await getQueueDetails(queueId);
       reply.send({
         message: 'Lấy thông tin hàng đợi thành công',
         data: queue,

@@ -2,6 +2,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import socketio from 'fastify-socket.io';
+import validatorCompilerPlugin from './plugins/validatorCompiler.plugins';
 
 import { socketPlugin } from '@/plugins/socket.plugins';
 import queueRoutes from '@/routes/queues.route';
@@ -29,6 +30,9 @@ async function bootstrap() {
       credentials: true
     }
   });
+
+  // Đăng ký plugin validator cho Zod
+  await fastify.register(validatorCompilerPlugin);
 
   // 3. Bây giờ mới đăng ký plugin tùy chỉnh
   await fastify.register(socketPlugin);
