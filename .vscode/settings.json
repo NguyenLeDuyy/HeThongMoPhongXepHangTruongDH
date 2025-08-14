@@ -1,0 +1,5 @@
+{
+  "java.compile.nullAnalysis.mode": "disabled",
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "cSpell.words": ["sonner"]
+}

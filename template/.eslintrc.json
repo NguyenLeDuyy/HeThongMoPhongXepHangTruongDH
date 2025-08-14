@@ -1,0 +1,26 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "eslint-config-prettier",
+    "prettier",
+    "plugin:@tanstack/eslint-plugin-query/recommended"
+  ],
+  "plugins": ["prettier"],
+  "rules": {
+    "no-unused-vars": "warn",
+    "prettier/prettier": [
+      "warn",
+      {
+        "arrowParens": "always",
+        "semi": false,
+        "trailingComma": "none",
+        "tabWidth": 2,
+        "endOfLine": "auto",
+        "useTabs": false,
+        "singleQuote": true,
+        "printWidth": 120,
+        "jsxSingleQuote": true
+      }
+    ]
+  }
+}

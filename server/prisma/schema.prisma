@@ -1,0 +1,191 @@
+// generators & datasource: giữ nguyên của bạn
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/* ===================== HÀNG ĐỢI ===================== */
+
+model Queue {
+  id          String   @id @default(cuid())
+  name        String
+  isOpen      Boolean  @default(true)
+
+  // Dùng để "tăng số" an toàn trong transaction
+  lastNumber  Int      @default(0)
+
+  tickets     Ticket[]
+  createdAt   DateTime @default(now())
+
+}
+
+enum TicketStatus {
+  pending
+  serving
+  skipped
+  done
+}
+
+model Ticket {
+  id        String       @id @default(cuid())
+  queueId   String
+  number    Int
+  status    TicketStatus @default(pending)
+  createdAt DateTime     @default(now())
+  calledAt  DateTime?
+
+  // staff đã phục vụ (tham chiếu Account.id)
+  servedBy Int?
+
+  // (tuỳ chọn) nếu muốn có relation tường minh tới Account:
+  servedByAccount Account? @relation("TicketServedBy", fields: [servedBy], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  queue     Queue        @relation(fields: [queueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  calls     CallLog[]
+
+  cancelReason String?
+  studentCode String?  // MSSV
+  fullName    String?
+
+  serviceStartAt DateTime?
+  finishedAt     DateTime?
+  @@index([queueId, status, createdAt]) // nếu bạn muốn lọc + sort theo thời gian mượt hơn
+
+  // Không trùng số trong cùng một queue
+  @@unique([queueId, number])
+  // Tăng tốc lọc vé đang chờ theo queue
+  @@index([queueId, status])
+}
+
+model CallLog {
+  id       String   @id @default(cuid())
+  ticketId String
+
+  // SỬA: phải là Int? để khớp với Account.id (Int)
+  staffId  Int?
+
+  action   String   // call|recall|skip|finish
+  ts       DateTime @default(now())
+  note String?
+
+  ticket Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // SỬA: vì staffId là optional + onDelete: SetNull => relation phải optional
+  staff  Account? @relation("CallLogStaff", fields: [staffId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+}
+
+/* ===================== TÀI KHOẢN (giữ nguyên + bổ sung quan hệ) ===================== */
+
+model Account {
+  id           Int            @id @default(autoincrement())
+  name         String
+  email        String         @unique
+  password     String
+  avatar       String?
+  role         String         @default("Employee") // Owner, Employee
+  orders       Order[]
+  employees    Account[]      @relation("OwnerEmployee")
+  owner        Account?       @relation("OwnerEmployee", fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  ownerId      Int?
+  refreshToken RefreshToken[]
+  sockets      Socket[]
+
+  // bổ sung 2 quan hệ phục vụ hàng đợi
+  servedTickets Ticket[] @relation("TicketServedBy")
+  callLogs      CallLog[] @relation("CallLogStaff")
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+/* ===================== PHẦN CŨ QUÁN ĂN ===================== */
+/* Giữ nguyên nếu bạn chưa muốn dọn DB. Nếu muốn "gọn đồ án", có thể xóa các model dưới đây
+   (Dish, DishSnapshot, Table, Order, Guest) trong một migration riêng để thuần xếp hàng. */
+
+model Dish {
+  id            Int            @id @default(autoincrement())
+  name          String
+  price         Int
+  description   String
+  image         String
+  status        String         @default("Available")
+  dishSnapshots DishSnapshot[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model DishSnapshot {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Int
+  description String
+  image       String
+  status      String   @default("Available")
+  dishId      Int?
+  dish        Dish?    @relation(fields: [dishId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  order       Order?
+}
+
+model Table {
+  number    Int      @id
+  capacity  Int
+  orders    Order[]
+  guests    Guest[]
+  status    String   @default("Available")
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id             Int          @id @default(autoincrement())
+  guestId        Int?
+  guest          Guest?       @relation(fields: [guestId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  table          Table?       @relation(fields: [tableNumber], references: [number], onDelete: SetNull, onUpdate: NoAction)
+  tableNumber    Int?
+  dishSnapshot   DishSnapshot @relation(fields: [dishSnapshotId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  dishSnapshotId Int          @unique
+  quantity       Int
+  orderHandler   Account?     @relation(fields: [orderHandlerId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  orderHandlerId Int?
+  status         String       @default("Pending")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model RefreshToken {
+  token     String   @id
+  accountId Int
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Guest {
+  id                    Int       @id @default(autoincrement())
+  name                  String
+  table                 Table?    @relation(fields: [tableNumber], references: [number], onDelete: SetNull, onUpdate: NoAction)
+  tableNumber           Int?
+  orders                Order[]
+  refreshToken          String?
+  refreshTokenExpiresAt DateTime?
+  sockets               Socket[]
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Socket {
+  socketId  String   @id
+  accountId Int?     @unique
+  account   Account? @relation(fields: [accountId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  guestId   Int?     @unique
+  guest     Guest?   @relation(fields: [guestId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+}
