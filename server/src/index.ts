@@ -1,58 +1,71 @@
-// server/src/index.ts
-import Fastify from 'fastify';
-import cors from '@fastify/cors';
-import socketio from 'fastify-socket.io';
-import validatorCompilerPlugin from './plugins/validatorCompiler.plugins';
+// File: d:\Study\Web\QuanLyQuanAn\server\src\index.ts
+import auth from '@fastify/auth'
+import Fastify from 'fastify'
+import cors from '@fastify/cors'
+import socketio from 'fastify-socket.io'
 
-import { socketPlugin } from '@/plugins/socket.plugins';
-import queueRoutes from '@/routes/queues.route';
-import ticketRoutes from '@/routes/tickets.route';
+// --- Import đầy đủ các thành phần ---
+import validatorCompilerPlugin from './plugins/validatorCompiler.plugins'
+import errorHandlerPlugin from './plugins/errorHandler.plugins' // Đã có file
+import { socketPlugin } from '@/plugins/socket.plugins'
+import authRoutes from '@/routes/auth.route'
+import accountRoutes from '@/routes/account.route' // Đã có file
+import queueRoutes from '@/routes/queues.route'
+import ticketRoutes from '@/routes/tickets.route'
 
-const PORT = Number(process.env.PORT ?? 3001);
-const HOST = process.env.HOST ?? '0.0.0.0';
-const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:3000';
+const PORT = Number(process.env.PORT ?? 4000)
+const HOST = process.env.HOST ?? '0.0.0.0'
+const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:3000'
 
 async function bootstrap() {
   const fastify = Fastify({
-    logger: true, // bật log cho dễ debug
-  });
+    logger: true,
+  })
 
-  // 1) CORS cho REST (Socket.IO CORS đã cấu hình trong plugin socket)
+  fastify.log.info({ DATABASE_URL: process.env.DATABASE_URL }, 'env debug')
+
+  // 1. Đăng ký các plugin cơ bản
   await fastify.register(cors, {
-    origin: [CLIENT_URL],   // thêm domain thật khi deploy
+    origin: [CLIENT_URL],
     credentials: true,
-  });
+  })
 
-  // 2. Đăng ký plugin socket.io chính
   await fastify.register(socketio, {
     cors: {
       origin: [CLIENT_URL],
-      credentials: true
-    }
-  });
+      credentials: true,
+    },
+  })
 
-  // Đăng ký plugin validator cho Zod
-  await fastify.register(validatorCompilerPlugin);
+  // 2. Đăng ký các plugin xử lý của chúng ta
+  await fastify.register(auth)
+  await fastify.register(validatorCompilerPlugin)
+  await fastify.register(errorHandlerPlugin) // Sẽ không còn lỗi ở đây
+  await fastify.register(socketPlugin)
 
-  // 3. Bây giờ mới đăng ký plugin tùy chỉnh
-  await fastify.register(socketPlugin);
+  // 3. Đăng ký các routes với prefix
+  fastify.log.info('Đăng ký các routes...')
+  await fastify.register(authRoutes, { prefix: '/auth' })
+  await fastify.register(accountRoutes, { prefix: '/accounts' }) // Sẽ không còn lỗi ở đây
+  await fastify.register(queueRoutes, { prefix: '/queues' })
+  await fastify.register(ticketRoutes)
 
-  // 4. Đăng ký các routes
-  await fastify.register(queueRoutes);
-  await fastify.register(ticketRoutes);
-
-  // 4) (tuỳ chọn) 404 fallback
+  // 4. Fallback cho các route không tồn tại
   fastify.setNotFoundHandler((req, reply) => {
-    reply.code(404).send({ message: 'Not Found' });
-  });
+    reply.code(404).send({ message: `Route ${req.method}:${req.url} không tồn tại.` })
+  })
 
-  // 5) Start server
-  await fastify.listen({ port: PORT, host: HOST });
-  fastify.log.info(`HTTP  : http://${HOST}:${PORT}`);
-  fastify.log.info(`Client: ${CLIENT_URL}`);
+  // In ra tất cả các routes đã đăng ký để kiểm tra
+  await fastify.ready()
+  fastify.log.info('Các routes đã được đăng ký:\n' + fastify.printRoutes())
+
+  // 5. Khởi động server
+  await fastify.listen({ port: PORT, host: HOST })
+  fastify.log.info(`Server backend đang chạy tại: http://${HOST}:${PORT}`)
+  fastify.log.info(`Cho phép client từ: ${CLIENT_URL}`)
 }
 
 bootstrap().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+  console.error(err)
+  process.exit(1)
+})

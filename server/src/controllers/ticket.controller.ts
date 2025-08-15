@@ -22,22 +22,15 @@ export const createTicket = async (queueId: string, data: CreateTicketBodyType) 
 
     const nextNumber = (lastTicket?.number ?? 0) + 1;
 
-    // (Tùy chọn) Tìm hoặc tạo sinh viên dựa trên MSSV
-    const student = await tx.student.upsert({
-        where: { mssv: data.mssv },
-        update: { name: data.studentName },
-        create: { mssv: data.mssv, name: data.studentName }
-    });
-
+    // Schema hiện không có model Student. Thay vì upsert vào model không tồn tại,
+    // lưu thông tin sinh viên trực tiếp vào các trường trên Ticket (studentCode, fullName).
     const newTicket = await tx.ticket.create({
       data: {
         number: nextNumber,
         queueId: queueId,
-        studentId: student.id,
+        studentCode: data.mssv,
+        fullName: data.studentName,
       },
-      include: {
-        student: true
-      }
     });
 
     return newTicket;
@@ -69,17 +62,16 @@ export const callNextTicket = async (queueId: string, staffId: number) => {
         status: TicketStatus.serving,
         calledAt: new Date(),
         serviceStartAt: new Date(),
-        servedBy: staffId,
+  // Only set servedBy if the staff account exists to avoid FK constraint errors
+  servedBy: (await tx.account.findUnique({ where: { id: staffId } })) ? staffId : null,
       },
-      include: {
-        student: true
-      }
+  // no include of `student` because schema has no Student model; use ticket fields
     });
 
     await tx.callLog.create({
       data: {
         ticketId: updatedTicket.id,
-        staffId: staffId,
+  staffId: (await tx.account.findUnique({ where: { id: staffId } })) ? staffId : null,
         action: 'call',
       },
     });
@@ -96,16 +88,16 @@ export const updateTicketStatus = async (ticketId: string, staffId: number, data
 
   const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } });
 
-  if (ticket.status === TicketStatus.completed || ticket.status === TicketStatus.skipped) {
+  if (ticket.status === TicketStatus.done || ticket.status === TicketStatus.skipped) {
       throw new StatusError({ status: 400, message: `Không thể cập nhật vé đã ${ticket.status}.` });
   }
 
   const updatedTicket = await prisma.ticket.update({
     where: { id: ticketId },
     data: {
-      status,
-      serviceEndAt: new Date(),
-      notes: reason,
+  status,
+  finishedAt: new Date(),
+  cancelReason: reason ?? null,
     },
   });
 
@@ -113,8 +105,8 @@ export const updateTicketStatus = async (ticketId: string, staffId: number, data
     data: {
       ticketId: ticketId,
       staffId: staffId,
-      action: status, // 'completed' or 'skipped'
-      notes: reason,
+  action: String(status), // 'done' or 'skipped'
+  note: reason ?? null,
     },
   });
 

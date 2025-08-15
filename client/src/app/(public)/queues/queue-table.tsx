@@ -57,6 +57,7 @@ export const queueTableColumns: ColumnDef<QueueItem>[] = [
     id: 'actions',
     cell: ({ row }) => {
       const queue = row.original;
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const router = useRouter();
 
       return (

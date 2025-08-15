@@ -9,13 +9,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateTicketBody, CreateTicketBodyType } from '@/schemaValidations/queue.schema';
 import { useMutation } from '@tanstack/react-query';
 import http from '@/lib/http';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { handleErrorApi } from '@/lib/utils';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export default function GetTicketPage() {
   const params = useParams();
-  const router = useRouter();
   const queueId = params.queueId as string;
 
   const form = useForm<CreateTicketBodyType>({
@@ -35,8 +34,7 @@ export default function GetTicketPage() {
     if (createTicketMutation.isPending) return;
     try {
       const result = await createTicketMutation.mutateAsync(values);
-      toast({
-        title: 'Thành công',
+      toast.success('Thành công', {
         description: `Bạn đã lấy số thành công! Số của bạn là ${result.payload.data.number}`,
       });
       // Chuyển hướng đến trang xem trạng thái vé (tùy chọn)

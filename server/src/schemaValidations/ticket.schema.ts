@@ -9,7 +9,7 @@ export const CreateTicketBody = z.object({
 export type CreateTicketBodyType = z.infer<typeof CreateTicketBody>;
 
 export const UpdateTicketStatusBody = z.object({
-  status: z.enum([TicketStatus.completed, TicketStatus.skipped]),
+  status: z.enum([TicketStatus.done, TicketStatus.skipped]),
   reason: z.string().optional(),
 });
 

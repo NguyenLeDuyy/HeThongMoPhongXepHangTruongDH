@@ -4,10 +4,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import http from '@/lib/http';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { useAppContext } from '@/app/app-provider';
 import { handleErrorApi } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAppContext } from '@/components/app-provider';
+
+// --- Local API/types for this page ---
+type Ticket = {
+  id: string;
+  number: number | string;
+  status: string;
+  student?: { name?: string; mssv?: string } | null;
+};
+
+type Queue = {
+  id: string;
+  name?: string;
+  tickets?: Ticket[];
+};
+
+type QueuePayload = { data: Queue };
+
+type ApiResp<T> = { status: number; payload: T };
 
 export default function StaffQueuePage() {
   const { socket } = useAppContext();
@@ -15,9 +33,9 @@ export default function StaffQueuePage() {
   const queryClient = useQueryClient();
   const queueId = params.queueId as string;
 
-  const { data: queueData, isLoading } = useQuery({
+  const { data: queueData, isLoading } = useQuery<ApiResp<QueuePayload>>({
     queryKey: ['queue', queueId],
-    queryFn: () => http.get(`/queues/${queueId}`),
+    queryFn: () => http.get<QueuePayload>(`/queues/${queueId}`),
     enabled: !!queueId,
   });
 
@@ -68,7 +86,7 @@ export default function StaffQueuePage() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          {tickets.map((ticket: any) => (
+          {tickets.map((ticket: Ticket) => (
             <Card key={ticket.id} className={`p-4 flex justify-between items-center ${ticket.status === 'serving' ? 'bg-yellow-100' : ''}`}>
               <div>
                 <p className="text-lg font-bold">Số: {ticket.number}</p>

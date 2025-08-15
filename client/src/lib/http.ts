@@ -57,15 +57,18 @@ const request = async <Response>(
     options?: CustomOptions | undefined
 ) => {
     let body: FormData | string | undefined = undefined
+    // Treat null/undefined as no-body. Only stringify when a non-null body is provided.
     if (options?.body instanceof FormData) {
         body = options.body
-    } else if (options?.body) {
+    } else if (options?.body !== undefined && options?.body !== null) {
         body = JSON.stringify(options.body)
     }
     const baseHeaders: {
         [key: string]: string
     } =
-        body instanceof FormData
+        // If body is FormData => don't set Content-Type (browser will set multipart boundaries)
+        // If body is undefined => don't set Content-Type either (no body)
+        body instanceof FormData || typeof body === 'undefined'
             ? {}
             : {
                 'Content-Type': 'application/json'

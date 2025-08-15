@@ -29,3 +29,43 @@ export const UpdateTicketStatusBody = z.object({
 });
 
 export type UpdateTicketStatusBodyType = z.infer<typeof UpdateTicketStatusBody>;
+
+// ===================== QUEUE (client) =====================
+export const QueueSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  isOpen: z.boolean().optional(),
+  lastNumber: z.number().optional(),
+  createdAt: z.string().optional(),
+  pendingCount: z.number().default(0),
+  servingCount: z.number().default(0)
+})
+
+export type QueueType = z.infer<typeof QueueSchema>
+
+export const QueueListRes = z.object({
+  message: z.string(),
+  data: z.array(QueueSchema)
+})
+
+export type QueueListResType = z.TypeOf<typeof QueueListRes>
+
+export const CreateQueueBody = z.object({
+  name: z.string().min(1)
+})
+
+export type CreateQueueBodyType = z.TypeOf<typeof CreateQueueBody>
+
+export const QueueRes = z.object({
+  message: z.string(),
+  data: QueueSchema
+})
+
+export type QueueResType = z.TypeOf<typeof QueueRes>
+
+export const UpdateQueueBody = z.object({
+  name: z.string().min(1).optional(),
+  isOpen: z.boolean().optional()
+})
+
+export type UpdateQueueBodyType = z.TypeOf<typeof UpdateQueueBody>

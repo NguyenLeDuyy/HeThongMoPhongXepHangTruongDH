@@ -33,7 +33,7 @@ export default async function authRoutes(fastify: FastifyInstance, options: Fast
         },
         body: LogoutBody
       },
-      preValidation: fastify.auth([requireLoginedHook])
+      preHandler: fastify.auth([requireLoginedHook])
     },
     async (request, reply) => {
       const message = await logoutController(request.body.refreshToken)
@@ -46,23 +46,23 @@ export default async function authRoutes(fastify: FastifyInstance, options: Fast
     '/login',
     {
       schema: {
-        response: {
-          200: LoginRes
-        },
         body: LoginBody
       }
     },
     async (request, reply) => {
       const { body } = request
       const { accessToken, refreshToken, account } = await loginController(body)
-      reply.send({
+      const payload = {
         message: 'Đăng nhập thành công',
         data: {
           account: account as LoginResType['data']['account'],
           accessToken,
           refreshToken
         }
-      })
+      }
+      // Validate against Zod schema to surface precise mismatch if any
+      const parsed = LoginRes.parse(payload)
+      reply.send(parsed)
     }
   )
   fastify.get<{

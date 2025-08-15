@@ -39,9 +39,7 @@ export const getQueueDetails = async (queueId: string) => {
         orderBy: {
           number: 'asc',
         },
-        include: {
-          student: true, // Giả sử bạn có model Student liên kết
-        }
+        // Do schema không có model Student, chỉ lấy các trường ticket có sẵn
       },
     },
   });
@@ -49,7 +47,16 @@ export const getQueueDetails = async (queueId: string) => {
   if (!queue) {
     throw new NotFoundError('Không tìm thấy hàng đợi.');
   }
-  return queue;
+  // Map lại tickets để client vẫn có `ticket.student?.name` và `ticket.student?.mssv`
+  const mappedTickets = (queue.tickets ?? []).map((t) => ({
+    ...t,
+    student: {
+      name: t.fullName ?? null,
+      mssv: t.studentCode ?? null,
+    },
+  }));
+
+  return { ...queue, tickets: mappedTickets };
 };
 
 /**

@@ -2,6 +2,7 @@ import envConfig from '@/config'
 import prisma from '@/database'
 import { LoginBodyType } from '@/schemaValidations/auth.schema'
 import { RoleType, TokenPayload } from '@/types/jwt.types'
+import { Role } from '@/constants/type'
 import { comparePassword } from '@/utils/crypto'
 import { AuthError, EntityError, StatusError } from '@/utils/errors'
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '@/utils/jwt'
@@ -29,13 +30,23 @@ export const loginController = async (body: LoginBodyType) => {
   if (!isPasswordMatch) {
     throw new EntityError([{ field: 'password', message: 'Email hoặc mật khẩu không đúng' }])
   }
+  // Normalize role coming from DB (may be uppercase like 'OWNER') to canonical values
+  const normalizeRole = (r: string): RoleType => {
+    const u = r.toUpperCase()
+    if (u === 'OWNER') return Role.Owner
+    if (u === 'EMPLOYEE') return Role.Employee
+    if (u === 'GUEST') return Role.Guest
+    return Role.Employee
+  }
+  const role = normalizeRole(account.role)
+
   const accessToken = signAccessToken({
     userId: account.id,
-    role: account.role as RoleType
+    role
   })
   const refreshToken = signRefreshToken({
     userId: account.id,
-    role: account.role as RoleType
+    role
   })
   const decodedRefreshToken = verifyRefreshToken(refreshToken)
   const refreshTokenExpiresAt = new Date(decodedRefreshToken.exp * 1000)
@@ -47,8 +58,15 @@ export const loginController = async (body: LoginBodyType) => {
       expiresAt: refreshTokenExpiresAt
     }
   })
+
+  // Trả về account an toàn, không chứa Date
   return {
-    account,
+    account: {
+      id: account.id,
+      name: account.name,
+      email: account.email,
+  role
+    },
     accessToken,
     refreshToken
   }
@@ -70,13 +88,21 @@ export const refreshTokenController = async (refreshToken: string) => {
     }
   })
   const account = refreshTokenDoc.account
+  const normalizeRole = (r: string): RoleType => {
+    const u = r.toUpperCase()
+    if (u === 'OWNER') return Role.Owner
+    if (u === 'EMPLOYEE') return Role.Employee
+    if (u === 'GUEST') return Role.Guest
+    return Role.Employee
+  }
+  const role = normalizeRole(account.role)
   const newAccessToken = signAccessToken({
     userId: account.id,
-    role: account.role as RoleType
+    role
   })
   const newRefreshToken = signRefreshToken({
     userId: account.id,
-    role: account.role as RoleType,
+    role,
     exp: decodedRefreshToken.exp
   })
   await prisma.refreshToken.delete({
@@ -175,13 +201,21 @@ export const loginGoogleController = async (code: string) => {
       message: 'Tài khoản này không tồn tại trên hệ thống website'
     })
   }
+  const normalizeRole = (r: string): RoleType => {
+    const u = r.toUpperCase()
+    if (u === 'OWNER') return Role.Owner
+    if (u === 'EMPLOYEE') return Role.Employee
+    if (u === 'GUEST') return Role.Guest
+    return Role.Employee
+  }
+  const role = normalizeRole(account.role)
   const accessToken = signAccessToken({
     userId: account.id,
-    role: account.role as RoleType
+    role
   })
   const refreshToken = signRefreshToken({
     userId: account.id,
-    role: account.role as RoleType
+    role
   })
 
   return {
@@ -191,7 +225,7 @@ export const loginGoogleController = async (code: string) => {
       id: account.id,
       name: account.name,
       email: account.email,
-      role: account.role as RoleType
+  role
     }
   }
 }
