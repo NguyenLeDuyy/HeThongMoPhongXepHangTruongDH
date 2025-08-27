@@ -34,14 +34,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  AccountListResType,
-  AccountType,
-} from "@/schemaValidations/account.schema";
+import { AccountListResType, AccountType } from "@/schemaValidations/account.schema";
 import AddEmployee from "@/app/manage/accounts/add-employee";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import EditEmployee from "@/app/manage/accounts/edit-employee";
-import { createContext, useContext, useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,54 +48,52 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AutoPagination from "@/components/auto-pagination";
-import {
-  useDeleteAccountMutation,
-  useGetAccountList,
-} from "@/queries/useAccount";
+import { useDeleteAccountMutation, useGetAccountList } from "@/queries/useAccount";
 import { toast } from "sonner";
 import { handleErrorApi } from "@/lib/utils";
 
 type AccountItem = AccountListResType["data"][0];
 
-const AccountTableContext = createContext<{
-  setEmployeeIdEdit: (value: number) => void;
+type AccountTableContextValue = {
+  setEmployeeIdEdit: (value: number | undefined) => void;
   employeeIdEdit: number | undefined;
   employeeDelete: AccountItem | null;
   setEmployeeDelete: (value: AccountItem | null) => void;
-}>({
-  setEmployeeIdEdit: (value: number | undefined) => {},
+};
+
+const AccountTableContext = createContext<AccountTableContextValue>({
+  setEmployeeIdEdit: () => {},
   employeeIdEdit: undefined,
   employeeDelete: null,
-  setEmployeeDelete: (value: AccountItem | null) => {},
+  setEmployeeDelete: () => {},
 });
 
-export const columns: ColumnDef<AccountType>[] = [
+export const columns: ColumnDef<AccountItem>[] = [
   {
     id: "stt",
     header: "STT",
-    cell: ({ row }) => {
-      return <>{row.index + 1}</>;
-    },
-  },
-  {
-    accessorKey: "id",
-    header: "ID",
+    cell: ({ row }) => <div>{row.index + 1}</div>,
   },
   {
     accessorKey: "avatar",
     header: "Avatar",
-    cell: ({ row }) => (
-      <div>
-        <Avatar className="aspect-square w-[100px] h-[100px] rounded-md object-cover">
-          <AvatarImage src={row.getValue("avatar")} />
-          <AvatarFallback className="rounded-none">
-            {row.original.name}
-          </AvatarFallback>
-        </Avatar>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const src = (row.getValue("avatar") as string | null) || "";
+      const name = row.original.name || "?";
+      return (
+        <div>
+          <Avatar className="aspect-square w-[64px] h-[64px] rounded-md">
+            <AvatarImage src={src} alt={name} className="object-cover" />
+            <AvatarFallback className="rounded-md">
+              {name?.charAt(0)?.toUpperCase() || "?"}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "name",
@@ -218,8 +212,6 @@ export default function AccountTable() {
     null
   );
   const accountListQuery = useGetAccountList();
-
-  const data = accountListQuery.data?.payload.data ?? [];
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -228,6 +220,8 @@ export default function AccountTable() {
     pageIndex, // Gía trị mặc định ban đầu, không có ý nghĩa khi data được fetch bất đồng bộ
     pageSize: PAGE_SIZE, //default page size
   });
+
+  const data = accountListQuery.data?.payload.data ?? [];
 
   const table = useReactTable({
     data,
@@ -257,6 +251,22 @@ export default function AccountTable() {
       pageSize: PAGE_SIZE,
     });
   }, [table, pageIndex]);
+
+  if (accountListQuery.isPending) {
+    return (
+      <div className="w-full h-full flex justify-center items-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (accountListQuery.isError) {
+    return (
+      <div className="w-full h-full flex justify-center items-center">
+        Error: {accountListQuery.error.message}
+      </div>
+    );
+  }
 
   return (
     <AccountTableContext.Provider

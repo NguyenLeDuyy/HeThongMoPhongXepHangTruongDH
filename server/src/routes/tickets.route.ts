@@ -64,7 +64,8 @@ export default async function ticketsRoutes(fastify: FastifyInstance, options: F
       const ticket = await updateTicketStatus(ticketId, staffId, request.body as any);
 
       // Gửi sự kiện real-time
-      fastify.io.to(ticket.queueId).emit('ticket-updated', ticket);
+  // Đồng bộ với convention room `queue-<id>` và phát cho cả namespace public + staff
+  fastify.emitQueue(ticket.queueId, 'ticket-updated', ticket);
 
       reply.send({
         message: 'Cập nhật trạng thái vé thành công',

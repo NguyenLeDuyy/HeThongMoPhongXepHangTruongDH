@@ -80,11 +80,18 @@ export const getEmployeeAccount = async (accountId: number) => {
 
 export const getAccountList = async () => {
   const account = await prisma.account.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      role: true,
+    },
     orderBy: {
-      createdAt: 'desc'
-    }
-  })
-  return account
+      createdAt: 'desc',
+    },
+  });
+  return account;
 }
 
 export const updateEmployeeAccount = async (accountId: number, body: UpdateEmployeeAccountBodyType) => {
@@ -172,11 +179,18 @@ export const deleteEmployeeAccount = async (accountId: number) => {
 export const getMeController = async (accountId: number) => {
   const account = prisma.account.findUniqueOrThrow({
     where: {
-      id: accountId
-    }
-  })
-  return account
-}
+      id: accountId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      role: true,
+    },
+  });
+  return account;
+};
 
 export const updateMeController = async (accountId: number, body: UpdateMeBodyType) => {
   const account = prisma.account.update({

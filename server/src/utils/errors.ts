@@ -30,6 +30,13 @@ export class StatusError extends Error {
   }
 }
 
+export class NotFoundError extends Error {
+  status: number = 404
+  constructor(message: string) {
+    super(message)
+  }
+}
+
 export function isPrismaClientKnownRequestError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
   return error instanceof Prisma.PrismaClientKnownRequestError
 }

@@ -40,6 +40,7 @@ import { FastifyInstance, FastifyPluginOptions } from 'fastify'
 
 export default async function accountRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
   fastify.addHook('preValidation', fastify.auth([requireLoginedHook]))
+  // GET /accounts
   fastify.get<{ Reply: AccountListResType }>(
     '/',
     {
@@ -151,7 +152,8 @@ export default async function accountRoutes(fastify: FastifyInstance, options: F
     }
   )
 
-  fastify.get<{ Reply: AccountResType }>(
+  // GET /accounts/me
+  fastify.get(
     '/me',
     {
       schema: {
@@ -163,12 +165,13 @@ export default async function accountRoutes(fastify: FastifyInstance, options: F
     async (request, reply) => {
       const account = await getMeController(request.decodedAccessToken?.userId as number)
       reply.send({
-        data: account as AccountResType['data'],
+        data: account,
         message: 'Lấy thông tin thành công'
       })
     }
   )
 
+  // PUT /accounts/me
   fastify.put<{
     Reply: AccountResType
     Body: UpdateMeBodyType

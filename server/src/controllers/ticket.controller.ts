@@ -86,29 +86,33 @@ export const callNextTicket = async (queueId: string, staffId: number) => {
 export const updateTicketStatus = async (ticketId: string, staffId: number, data: UpdateTicketStatusBodyType) => {
   const { status, reason } = data;
 
-  const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } });
+  return await prisma.$transaction(async (tx) => {
+    const ticket = await tx.ticket.findUniqueOrThrow({ where: { id: ticketId } });
 
-  if (ticket.status === TicketStatus.done || ticket.status === TicketStatus.skipped) {
+    if (ticket.status === TicketStatus.done || ticket.status === TicketStatus.skipped) {
       throw new StatusError({ status: 400, message: `Không thể cập nhật vé đã ${ticket.status}.` });
-  }
+    }
 
-  const updatedTicket = await prisma.ticket.update({
-    where: { id: ticketId },
-    data: {
-  status,
-  finishedAt: new Date(),
-  cancelReason: reason ?? null,
-    },
+    const updatedTicket = await tx.ticket.update({
+      where: { id: ticketId },
+      data: {
+        status,
+        finishedAt: new Date(),
+        cancelReason: reason ?? null,
+      },
+    });
+
+    // Guard staffId to avoid FK violation if account not found
+    const staff = await tx.account.findUnique({ where: { id: staffId } });
+    await tx.callLog.create({
+      data: {
+        ticketId,
+        staffId: staff ? staffId : null,
+        action: String(status), // 'done' or 'skipped'
+        note: reason ?? null,
+      },
+    });
+
+    return updatedTicket;
   });
-
-  await prisma.callLog.create({
-    data: {
-      ticketId: ticketId,
-      staffId: staffId,
-  action: String(status), // 'done' or 'skipped'
-  note: reason ?? null,
-    },
-  });
-
-  return updatedTicket;
 };

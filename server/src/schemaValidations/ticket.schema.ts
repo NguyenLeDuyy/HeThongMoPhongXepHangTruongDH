@@ -16,7 +16,7 @@ export const UpdateTicketStatusBody = z.object({
 export type UpdateTicketStatusBodyType = z.infer<typeof UpdateTicketStatusBody>;
 
 export const TicketIdParam = z.object({
-  ticketId: z.string().uuid('ID vé không hợp lệ'),
+  ticketId: z.string().cuid('ID vé không hợp lệ'),
 });
 
 export type TicketIdParamType = z.infer<typeof TicketIdParam>;

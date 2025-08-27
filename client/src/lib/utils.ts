@@ -162,7 +162,7 @@ export const checkAndRefreshToken = async (param?: {
       const role = decodedRefreshToken.role
       const res = role === Role.Guest
         ? await guestApiRequest.refreshToken()
-        : await authApiRequest.refreshToken();
+        : await authApiRequest.sRefreshToken({ refreshToken });
       setAccessTokenToLocalStorage(res.payload.data.accessToken);
       setRefreshTokenToLocalStorage(res.payload.data.refreshToken);
       param?.onSuccess && param.onSuccess()
@@ -195,7 +195,8 @@ export const formatDateTimeToTimeString = (date: string | Date) => {
 }
 
 export const generateSocketInstance = (accessToken: string) => {
-  return io(envConfig.NEXT_PUBLIC_API_ENDPOINT, {
+  // Staff namespace requires Authorization via handshake.auth
+  return io(`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/staff`, {
     auth: {
       Authorization: `Bearer ${accessToken}`,
     },

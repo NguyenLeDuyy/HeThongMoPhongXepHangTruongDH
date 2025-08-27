@@ -1,13 +1,16 @@
 import { Role } from '@/constants/type'
 import z from 'zod'
 
-export const AccountSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  email: z.string(),
-  role: z.enum([Role.Owner, Role.Employee]),
-  avatar: z.string().nullable()
-})
+export const AccountSchema = z
+  .object({
+    id: z.number(),
+    name: z.string(),
+    email: z.string(),
+    // Accept any string to be resilient to DB values (e.g., legacy or Guest)
+    role: z.string(),
+    avatar: z.string().nullable()
+  })
+  .passthrough()
 
 export type AccountType = z.TypeOf<typeof AccountSchema>
 
@@ -18,12 +21,10 @@ export const AccountListRes = z.object({
 
 export type AccountListResType = z.TypeOf<typeof AccountListRes>
 
-export const AccountRes = z
-  .object({
-    data: AccountSchema,
-    message: z.string()
-  })
-  .strict()
+export const AccountRes = z.object({
+  data: AccountSchema,
+  message: z.string()
+})
 
 export type AccountResType = z.TypeOf<typeof AccountRes>
 
