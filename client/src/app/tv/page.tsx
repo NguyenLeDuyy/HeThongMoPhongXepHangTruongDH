@@ -23,7 +23,7 @@ export default function TvQueuesPage() {
   const queues: Queue[] = queuesResp?.data ?? []
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
+    <div className="min-h-screen bg-white text-black p-6">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Chọn hàng đợi để hiển thị trên TV</h1>
         {isLoading ? (
@@ -34,7 +34,7 @@ export default function TvQueuesPage() {
               <Link
                 key={q.id}
                 href={`/tv/${q.id}`}
-                className="block rounded-lg border border-neutral-700 bg-neutral-900 p-4 hover:bg-neutral-800"
+                className="block rounded-lg border border-neutral-700 bg-gray-50 p-4 hover:bg-neutral-800"
               >
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="text-xl font-semibold truncate">{q.name}</h2>
@@ -42,7 +42,7 @@ export default function TvQueuesPage() {
                     {q.isOpen ? 'Đang mở' : 'Đang đóng'}
                   </span>
                 </div>
-                <div className="text-sm text-neutral-300 space-y-1">
+                <div className="text-sm text-black space-y-1">
                   <p>
                     Đang phục vụ:{' '}
                     <span className="font-semibold">{q.servingCount ?? 0}</span>

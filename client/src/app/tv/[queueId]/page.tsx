@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import http from '@/lib/http'
 import { io, Socket } from 'socket.io-client'
 import envConfig from '@/config'
+import Image from 'next/image'
 
 type Ticket = {
   id: string
@@ -61,25 +62,30 @@ export default function TvDisplayPage() {
     }
   }, [queue])
 
-  if (isLoading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Đang tải...</div>
+  if (isLoading) return <div className="min-h-screen bg-white text-black flex items-center justify-center">Đang tải...</div>
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-white text-red-500 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold">{queue?.name ?? 'Hàng đợi'}</h1>
-          <p className="text-neutral-400">Màn hình TV</p>
+          <div className="flex items-center gap-4">
+            <Image src="/logo.png" alt="Logo" width={250} height={250} className="object-contain" />
+            <div className="flex-1 text-center mr-60">
+              <h1 className="text-4xl font-bold">{queue?.name ?? 'Hàng đợi'}</h1>
+              <p className="text-neutral-600">Màn hình TV</p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-          <div className="lg:col-span-2 bg-neutral-900 rounded-xl p-8 flex flex-col items-center justify-center">
-            <p className="text-2xl text-neutral-400 mb-3">Đang phục vụ</p>
-            <div className="text-[120px] leading-none font-black tracking-widest">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch text-white">
+          <div className="lg:col-span-2 bg-[rgb(0,134,137)] rounded-xl p-8 flex flex-col items-center justify-center">
+            <p className="text-2xl font-bold mb-3">Đang phục vụ</p>
+            <div className="text-[120px] leading-none font-black tracking-widest ">
               {current?.number ?? '-'}
             </div>
           </div>
 
-          <div className="bg-neutral-900 rounded-xl p-6">
+          <div className="bg-[rgb(0,134,137)] rounded-xl p-6">
             <p className="text-xl font-semibold mb-4">Số tiếp theo</p>
             <div className="space-y-3">
               {nextList.map((t) => (
@@ -89,7 +95,7 @@ export default function TvDisplayPage() {
                 </div>
               ))}
               {nextList.length === 0 && (
-                <div className="text-neutral-500">Chưa có vé chờ.</div>
+                <div className="text-white">Chưa có vé chờ.</div>
               )}
             </div>
           </div>

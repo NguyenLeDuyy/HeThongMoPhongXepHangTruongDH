@@ -1,20 +1,3 @@
-# Quản Lý Quán Ăn
-
-## Giới thiệu
-
-Dự án **Quản Lý Quán Ăn** là một hệ thống quản lý quán ăn, hỗ trợ các chức năng như đặt món, quản lý bàn ăn, quản lý nhân viên, và phân tích doanh thu. Dự án được xây dựng với công nghệ hiện đại, bao gồm **Next.js**, **Node.js**, **Fastify**, và **SQLite**.
-
-## Tính năng chính
-
-- **Khách hàng**:
-  - Đăng nhập và đặt món ăn.
-  - Xem menu và trạng thái đơn hàng.
-- **Quản lý**:
-  - Quản lý món ăn, bàn ăn, nhân viên.
-  - Phân tích doanh thu và hiệu suất hoạt động.
-- **Realtime**:
-  - Cập nhật trạng thái đơn hàng và bàn ăn theo thời gian thực.
-
 ## Công nghệ sử dụng
 
 - **Frontend**: Next.js, Tailwind CSS.
@@ -28,64 +11,61 @@ Dự án **Quản Lý Quán Ăn** là một hệ thống quản lý quán ăn, h
 - Node.js = 20.11.0
 - npm >= 8.x
 
-### Hướng dẫn cài đặt
+# Hệ thống xếp hàng - UTH (Mô phỏng)
 
-1. Clone repository:
+Mục tiêu: Mô phỏng hệ thống xếp hàng tại trường đại học UTH. Ứng dụng cho phép:
 
-   ```bash
-   git clone https://github.com/your-repo/QuanLyQuanAn.git
-   cd QuanLyQuanAn
-   ```
+- Sinh viên lấy số thứ tự cho các quầy (nhà ăn, phòng hành chính, v.v.).
+- Nhân viên quản lý gọi số, chuyển trạng thái vé (đang phục vụ, hoàn thành, bỏ qua).
+- Hiển thị lên màn hình TV cho khách theo dõi số đang phục vụ.
+- Hỗ trợ realtime (WebSocket) để cập nhật trạng thái tức thì.
 
-2. Cài đặt các package:
+Tính năng chính
 
-   ```bash
-   cd client
-   npm install
-   cd ../server
-   npm install
-   ```
+- Lấy số tự động và quản lý thứ tự.
+- Giao diện dành cho khách (lấy số, xem trạng thái).
+- Giao diện dành cho quản trị/nhân viên (gọi tiếp, xem lịch sử).
+- Màn hình TV để hiển thị số đang phục vụ.
+- Hệ thống demo phù hợp cho môi trường trường đại học (UTH).
 
-3. Khởi tạo database:
+Cấu trúc dự án (đã có sẵn trong repository)
 
-   ```bash
-   cd server
-   npx prisma db push
-   ```
+- client/ — Frontend Next.js (UI người dùng, quản lý, guest)
+  - Xem hướng dẫn nhanh: [client/README.md](client/README.md)
+- server/ — Backend Node.js + Fastify (API, DB, realtime)
+  - Xem hướng dẫn nhanh: [server/Readme.md](server/Readme.md)
+- template/ — Mẫu giao diện/komponent (dùng để tham khảo)
+  - Xem: [template/README.md](template/README.md)
 
-4. Chạy ứng dụng:
-   - **Frontend**:
-     ```bash
-     cd client
-     npm run dev
-     ```
-   - **Backend**:
-     ```bash
-     cd server
-     npm run dev
-     ```
+Cài đặt & chạy (phát triển)
 
-## Deploy
+1. Backend
+   - cd server
+   - npm install
+   - copy file .env vào folder server
+   - npx prisma db push
+   - npm run dev
+2. Frontend
+   - cd client
+   - npm install
+   - copy file .env vào folder client
+   - npm run dev
 
-### Backend
+Gợi ý cấu hình cho mô phỏng UTH
 
-- Deploy backend lên VPS hoặc các nền tảng hỗ trợ Node.js.
-- Không sử dụng SQLite và upload ảnh trên các nền tảng như Render.com (plan free).
+- Tạo một queue cho từng địa điểm (nhà ăn A, nhà ăn B, phòng Hành chính).
+- Dùng TV mode để hiển thị queue trên thiết bị dùng chung.
+- Sử dụng tài khoản demo cho nhân viên để thử gọi số.
 
-### Frontend
+Ghi chú triển khai
 
-- Deploy frontend lên Vercel:
-- Đảm bảo backend API hoạt động trước khi deploy frontend.
+- Backend lưu ảnh vào /uploads — khi deploy ra domain thật, cập nhật biến môi trường DOMAIN/PROTOCOL để đường dẫn ảnh đúng.
+- Không đưa file database local (prisma/dev.db) và uploads lên môi trường production.
 
-## Tài khoản mặc định
+Tài khoản mặc định (demo)
 
-- **Admin**: admin@order.com | 123456
-- **User**:
-  - phuminhdat@gmail.com | 123123
-  - buianhson@gmail.com | 123123
-  - ngocbichhuynh@gmail.com | 123123
-  - binhnguyen@gmail.com | 123123
+- Admin: admin@order.com | 123456
 
-## Liên hệ
+Liên hệ
 
-Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email: support@quanlyquanan.com.
+- Người phát triển: UTH - Nhóm mô phỏng hệ thống xếp hàng
