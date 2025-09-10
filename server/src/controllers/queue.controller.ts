@@ -91,3 +91,25 @@ export const deleteQueue = async (queueId: string) => {
     await tx.queue.delete({ where: { id: queueId } });
   });
 };
+
+/**
+ * Reset số thứ tự của một hàng đợi về ban đầu.
+ * Thực hiện bằng cách xóa toàn bộ tickets thuộc queue (call logs bị xoá theo cascade)
+ * và đưa lastNumber về 0 để bảo toàn trạng thái.
+ * Lưu ý: Do ràng buộc unique([queueId, number]), nếu không xoá các vé cũ thì không thể
+ * tái sử dụng lại số bắt đầu từ 1. Vì vậy cách an toàn là xoá toàn bộ vé.
+ */
+export const resetQueue = async (queueId: string) => {
+  return await prisma.$transaction(async (tx) => {
+    // Đảm bảo queue tồn tại
+    await tx.queue.findUniqueOrThrow({ where: { id: queueId } });
+
+    // Xoá tất cả vé của queue này (CallLog xoá theo cascade)
+    await tx.ticket.deleteMany({ where: { queueId } });
+
+    // Đặt lại lastNumber về 0 (dù hiện tại logic sinh số dựa trên vé, vẫn nên đồng bộ)
+    const updatedQueue = await tx.queue.update({ where: { id: queueId }, data: { lastNumber: 0 } });
+
+    return updatedQueue;
+  });
+};

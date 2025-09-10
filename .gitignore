@@ -1,0 +1,21 @@
+node_modules/
+dist/
+
+# Tools (serial-bridge, ...)
+/tools/**/node_modules/
+/tools/**/dist/
+/tools/**/build/
+/tools/**/.cache/
+/tools/**/.parcel-cache/
+/tools/**/.tsbuildinfo
+/tools/**/logs/
+/tools/**/*.log
+/tools/**/.DS_Store
+/tools/**/.vscode/
+/tools/**/tmp/
+
+# Env files in tools
+/tools/**/.env
+/tools/**/.env.local
+/tools/**/.env.* 
+!/tools/**/.env.example

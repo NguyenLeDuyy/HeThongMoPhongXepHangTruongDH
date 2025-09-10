@@ -6,6 +6,7 @@ import {
   getQueues,
   updateQueue,
 } from '@/controllers/queue.controller';
+import { resetQueue } from '@/controllers/queue.controller';
 import { CreateQueueBody, QueueIdParam, QueueIdParamType, UpdateQueueBody } from '@/schemaValidations/queue.schema';
 
 export default async function queuesRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
@@ -14,8 +15,8 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
     schema: {
       tags: ['Queues'],
       summary: 'Lấy danh sách hàng đợi',
-    },
-    handler: async (request, reply) => {
+    } as any,
+    handler: async (request: any, reply: any) => {
       const queues = await getQueues();
       reply.send({
         message: 'Lấy danh sách hàng đợi thành công',
@@ -30,8 +31,8 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
       tags: ['Queues'],
       summary: 'Lấy thông tin chi tiết một hàng đợi',
       params: QueueIdParam,
-    },
-    handler: async (request, reply) => {
+    } as any,
+    handler: async (request: any, reply: any) => {
       // Sử dụng type đã import để code an toàn hơn, không cần 'as any'
       const { queueId } = request.params as QueueIdParamType;
       // SỬA LẠI: Gọi hàm getQueueDetails đã import từ controller
@@ -49,8 +50,8 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
       tags: ['Queues'],
       summary: 'Tạo hàng đợi mới',
       body: CreateQueueBody,
-    },
-    handler: async (request, reply) => {
+    } as any,
+    handler: async (request: any, reply: any) => {
       const queue = await createQueue(request.body as any);
       reply.status(201).send({
         message: 'Tạo hàng đợi thành công',
@@ -66,8 +67,8 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
       summary: 'Cập nhật thông tin hàng đợi',
       params: QueueIdParam,
       body: UpdateQueueBody,
-    },
-    handler: async (request, reply) => {
+    } as any,
+    handler: async (request: any, reply: any) => {
       const { queueId } = request.params as { queueId: string };
       const queue = await updateQueue(queueId, request.body as any);
       reply.send({
@@ -83,8 +84,8 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
       tags: ['Queues'],
       summary: 'Xóa một hàng đợi',
       params: QueueIdParam,
-    },
-    handler: async (request, reply) => {
+    } as any,
+    handler: async (request: any, reply: any) => {
       const { queueId } = request.params as { queueId: string };
       await deleteQueue(queueId);
       reply.send({
@@ -92,5 +93,28 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
       });
     },
   });
+
+  // Reset số thứ tự về ban đầu cho một hàng đợi
+  fastify.post('/:queueId/reset-number', {
+    schema: {
+      tags: ['Queues'],
+      summary: 'Reset số thứ tự về ban đầu',
+      params: QueueIdParam,
+    } as any,
+    handler: async (request: any, reply: any) => {
+      const { queueId } = request.params as QueueIdParamType;
+      // Controller sẽ xóa tất cả ticket của queue và đặt lastNumber về 0
+      const queue = await resetQueue(queueId);
+
+      // emit sự kiện để UI đang mở realtime cập nhật lại danh sách vé
+      fastify.emitQueue(queueId, 'queue-reset', { queueId });
+
+      reply.send({
+        message: 'Đã reset số thứ tự về ban đầu',
+        data: queue,
+      });
+    },
+  });
+
 }
 

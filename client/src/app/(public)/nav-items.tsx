@@ -29,16 +29,16 @@ const menuItems: {
       title: "Trang chủ",
       href: "/",
     },
-    {
-      title: "Món ăn",
-      href: "/guest/menu", // Chưa đăng nhập thì vẫn có thể xem menu
-      role: [Role.Guest]
-    },
-    {
-      title: "Đơn hàng",
-      href: "/guest/orders", // Chưa đăng nhập thì vẫn có thể xem menu
-      role: [Role.Guest]
-    },
+    // {
+    //   title: "Món ăn",
+    //   href: "/guest/menu", // Chưa đăng nhập thì vẫn có thể xem menu
+    //   role: [Role.Guest]
+    // },
+    // {
+    //   title: "Đơn hàng",
+    //   href: "/guest/orders", // Chưa đăng nhập thì vẫn có thể xem menu
+    //   role: [Role.Guest]
+    // },
     {
       title: "Đăng nhập",
       href: "/login",

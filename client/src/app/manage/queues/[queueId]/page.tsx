@@ -69,12 +69,14 @@ export default function StaffQueuePage() {
     socket.on('ticket-created', refetchQueue);
     socket.on('ticket-called', refetchQueue);
     socket.on('ticket-updated', refetchQueue);
+    socket.on('queue-reset', refetchQueue);
 
     return () => {
       socket.emit('leave-queue', queueId);
       socket.off('ticket-created', refetchQueue);
       socket.off('ticket-called', refetchQueue);
       socket.off('ticket-updated', refetchQueue);
+      socket.off('queue-reset', refetchQueue);
     };
   }, [socket, queueId, queryClient]);
 
@@ -122,7 +124,7 @@ export default function StaffQueuePage() {
       .slice()
       .sort((a, b) => new Date(b.finishedAt || 0).getTime() - new Date(a.finishedAt || 0).getTime())
       .slice(0, 10);
-  return { serving, pending, doneList, skippedList };
+    return { serving, pending, doneList, skippedList };
   }, [queue]);
 
   if (isLoading) return <div>Đang tải...</div>;

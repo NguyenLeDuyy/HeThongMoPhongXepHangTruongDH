@@ -1,7 +1,7 @@
 // File: d:\Study\Web\QuanLyQuanAn\server\src\plugins\errorHandler.plugins.ts
 import { FastifyInstance, FastifyPluginOptions, FastifyReply, FastifyRequest } from 'fastify';
 import { ZodError } from 'zod';
-import { EntityError, StatusError } from '@/utils/errors'; // Giả sử bạn có các class lỗi này
+import { EntityError, StatusError, NotFoundError } from '@/utils/errors'; // Giả sử bạn có các class lỗi này
 
 // Hàm plugin phải được export default
 export default async function errorHandlerPlugin(fastify: FastifyInstance, options: FastifyPluginOptions) {
@@ -19,13 +19,21 @@ export default async function errorHandlerPlugin(fastify: FastifyInstance, optio
     if (error instanceof EntityError) {
       return reply.status(422).send({
         message: error.message,
-        errors: error.errors,
+        errors: error.fields,
       });
     }
 
     if (error instanceof StatusError) {
       return reply.status(error.status).send({
         message: error.message,
+      });
+    }
+
+    if ((error as any)?.name === 'NotFoundError' || error instanceof NotFoundError) {
+      // Bảo toàn status 404 từ class NotFoundError
+      const status = (error as any).status ?? 404;
+      return reply.status(status).send({
+        message: error.message || 'Không tìm thấy tài nguyên.',
       });
     }
 

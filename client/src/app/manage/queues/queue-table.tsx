@@ -60,6 +60,16 @@ export default function QueueTable() {
     onError: () => toast.error('Xóa thất bại')
   });
 
+  const resetMutation = useMutation({
+    mutationFn: (id: string) => http.post(`/queues/${id}/reset-number`, {}),
+    onSuccess: () => {
+      toast.success('Đã reset số thứ tự');
+      // Cập nhật lại list + để các view chi tiết tự cập nhật qua socket event `queue-reset`
+      queryClient.invalidateQueries({ queryKey: ['queues'] });
+    },
+    onError: () => toast.error('Reset thất bại')
+  });
+
   const getStudentLink = useCallback((id: string) => {
     if (typeof window === 'undefined') return '';
     return `${window.location.origin}/queues/${id}/get-ticket`;
@@ -115,6 +125,11 @@ export default function QueueTable() {
                   <Link href={`/manage/queues/${q.id}`} target="_blank">
                     Mở quản lý
                   </Link>
+                </Button>
+                <Button size="sm" variant="outline" onClick={() =>
+                  confirm('Reset số thứ tự về ban đầu? Tất cả vé hiện tại sẽ bị xoá.') && resetMutation.mutate(q.id)
+                }>
+                  Reset số
                 </Button>
                 <Button size="sm" variant="destructive" onClick={() =>
                   confirm('Xóa hàng đợi này?') && deleteMutation.mutate(q.id)

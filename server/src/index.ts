@@ -41,7 +41,8 @@ async function bootstrap() {
 
   await fastify.register(socketio, {
     cors: {
-      origin: [CLIENT_URL],
+      // Allow Node-based bridges (no browser Origin) and the client URL
+      origin: [CLIENT_URL, '*'],
       credentials: true,
     },
   });
