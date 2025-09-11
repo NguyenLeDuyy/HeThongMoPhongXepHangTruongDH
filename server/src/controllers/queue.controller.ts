@@ -2,6 +2,7 @@ import prisma from '@/database';
 import { CreateQueueBodyType, UpdateQueueBodyType } from '@/schemaValidations/queue.schema';
 import { NotFoundError } from '@/utils/errors';
 import { TicketStatus } from '@prisma/client';
+import { randomId } from '@/utils/helpers';
 
 /**
  * Lấy danh sách tất cả các hàng đợi cùng với số vé đang chờ và đang phục vụ.
@@ -66,6 +67,7 @@ export const createQueue = async (data: CreateQueueBodyType) => {
   const queue = await prisma.queue.create({
     data: {
       name: data.name,
+      token: randomId(),
     },
   });
   return queue;
@@ -90,6 +92,17 @@ export const deleteQueue = async (queueId: string) => {
     await tx.ticket.deleteMany({ where: { queueId } });
     await tx.queue.delete({ where: { id: queueId } });
   });
+};
+
+/** Rotate QR token for a queue and invalidate related guest refresh tokens if needed */
+export const rotateQueueToken = async (queueId: string) => {
+  // Currently no guest auth per queue; we only rotate the token
+  const newToken = randomId();
+  const updated = await prisma.queue.update({
+    where: { id: queueId },
+    data: { token: newToken },
+  });
+  return updated;
 };
 
 /**

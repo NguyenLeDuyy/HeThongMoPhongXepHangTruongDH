@@ -3,61 +3,76 @@ import { getTableLink } from "@/lib/utils";
 import QRCode from "qrcode";
 import { useEffect, useRef } from "react";
 
+type QRCodeTableProps = {
+  // Original table props (backward compatible)
+  token?: string;
+  tableNumber?: number;
+  // Generic QR value (preferred for arbitrary links)
+  value?: string;
+  // Canvas width
+  width?: number;
+  // Optional footer lines to render under the QR
+  footerTexts?: string[];
+};
+
 export default function QRCodeTable({
   token,
   tableNumber,
+  value,
   width = 250,
-}: {
-  token: string;
-  tableNumber: number;
-  width?: number;
-}) {
+  footerTexts,
+}: QRCodeTableProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    // Hiện tại: Thư viện QRCode nó sẽ vẽ lên cái thẻ Canvas
-    // Bây giờ: Chúng ta sẽ tạo 1 cái thẻ canvas ảo để thư viện QRCode code nó vẽ QR lên trên đó.
-    // Và chúng ta sẽ edit thẻ canvas thật
-    // Cuối cùng thì chúng ta sẽ đưa cái thẻ canvas ảo chứa QR Code ở trên vào thẻ Canvas thật
+    // Determine the QR data and footer texts
+    const data = value ?? (token && typeof tableNumber === "number"
+      ? getTableLink({ token, tableNumber })
+      : "");
+
+    if (!data) return;
+
+    const defaultFooter = token && typeof tableNumber === "number"
+      ? ["Quán ăn Duy Lê", `Bàn số ${tableNumber}`, "Quét mã QR để gọi món"]
+      : [];
+
+    const lines = footerTexts ?? defaultFooter;
+
     const canvas = canvasRef.current!;
-    canvas.height = width + 70;
+    const lineHeight = 22;
+    const bottomBlockHeight = lines.length > 0 ? 15 + lines.length * lineHeight : 0;
+    canvas.height = width + bottomBlockHeight;
     canvas.width = width;
-    const canvasContext = canvas.getContext("2d")!;
-    canvasContext.fillStyle = "#fff";
-    canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-    canvasContext.font = "20px Arial";
-    canvasContext.textAlign = "center";
-    canvasContext.fillStyle = "#000";
-    canvasContext.fillText(
-      `Quán ăn Duy Lê`,
-      canvas.width / 2,
-      canvas.width + 15
-    );
-    canvasContext.fillText(
-      `Bàn số ${tableNumber}`,
-      canvas.width / 2,
-      canvas.width + 37
-    );
-    canvasContext.fillText(
-      `Quét mã QR để gọi món`,
-      canvas.width / 2,
-      canvas.width + 60
-    );
+    const ctx = canvas.getContext("2d")!;
+    // background
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // footer texts
+    if (lines.length > 0) {
+      ctx.font = "20px Arial";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#000";
+      lines.forEach((text, idx) => {
+        const y = width + 15 + idx * lineHeight;
+        ctx.fillText(text, canvas.width / 2, y);
+      });
+    }
+
+    // draw QR to a virtual canvas then paint onto real canvas
     const virtualCanvas = document.createElement("canvas");
     QRCode.toCanvas(
       virtualCanvas,
-      getTableLink({
-        token,
-        tableNumber,
-      }),
+      data,
       {
         width,
         margin: 4,
       },
       function (error) {
         if (error) console.error(error);
-        canvasContext.drawImage(virtualCanvas, 0, 0, width, width);
+        const dx = 0;
+        const dy = 0;
+        ctx.drawImage(virtualCanvas, dx, dy, width, width);
       }
     );
-  }, [token, width, tableNumber]);
+  }, [token, value, width, tableNumber, footerTexts]);
   return <canvas ref={canvasRef} />;
 }

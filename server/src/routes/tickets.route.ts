@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
-import { callNextTicket, createTicket, updateTicketStatus } from '@/controllers/ticket.controller';
-import { CreateTicketBody, TicketIdParam, UpdateTicketStatusBody } from '@/schemaValidations/ticket.schema';
+import { callNextTicket, createTicket, updateTicketStatus, cancelTicket } from '@/controllers/ticket.controller';
+import { CreateTicketBody, TicketIdParam, UpdateTicketStatusBody, CancelTicketBody } from '@/schemaValidations/ticket.schema';
 import { QueueIdParam } from '@/schemaValidations/queue.schema';
 
 export default async function ticketsRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
@@ -64,11 +64,33 @@ export default async function ticketsRoutes(fastify: FastifyInstance, options: F
       const ticket = await updateTicketStatus(ticketId, staffId, request.body as any);
 
       // Gửi sự kiện real-time
-  // Đồng bộ với convention room `queue-<id>` và phát cho cả namespace public + staff
-  fastify.emitQueue(ticket.queueId, 'ticket-updated', ticket);
+      // Đồng bộ với convention room `queue-<id>` và phát cho cả namespace public + staff
+      fastify.emitQueue(ticket.queueId, 'ticket-updated', ticket);
 
       reply.send({
         message: 'Cập nhật trạng thái vé thành công',
+        data: ticket,
+      });
+    },
+  });
+
+  // Khách tự hủy vé (cần token của queue)
+  fastify.post('/tickets/:ticketId/cancel', {
+    schema: {
+      tags: ['Tickets'],
+      summary: 'Khách hủy vé của mình (xác thực bằng token QR của queue)',
+      params: TicketIdParam,
+      body: CancelTicketBody,
+    },
+    handler: async (request, reply) => {
+      const { ticketId } = request.params as { ticketId: string };
+      const ticket = await cancelTicket(ticketId, request.body as any);
+
+      // thông báo realtime để UI cập nhật
+      fastify.emitQueue(ticket.queueId, 'ticket-updated', ticket);
+
+      reply.send({
+        message: 'Đã hủy vé thành công',
         data: ticket,
       });
     },

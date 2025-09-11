@@ -12,8 +12,8 @@ const fontSans = FontSans({
   variable: '--font-sans'
 })
 export const metadata: Metadata = {
-  title: 'Le Duy Restaurant',
-  description: 'The best restaurant in the world'
+  title: 'Hệ thống xếp hàng UTH',
+  description: 'Hệ thống xếp hàng được xây dựng dành riêng cho sinh viên UTH'
 }
 
 export default function RootLayout({

@@ -20,6 +20,9 @@ model Queue {
   // Dùng để "tăng số" an toàn trong transaction
   lastNumber  Int      @default(0)
 
+  // Token để tạo QR cho sinh viên lấy số; có thể rotate để vô hiệu hoá QR cũ
+  token       String?  @default(cuid())
+
   tickets     Ticket[]
   createdAt   DateTime @default(now())
 

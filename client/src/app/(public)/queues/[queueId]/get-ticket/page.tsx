@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CreateTicketBody, CreateTicketBodyType } from '@/schemaValidations/queue.schema';
+import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import http from '@/lib/http';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { handleErrorApi } from '@/lib/utils';
 import { toast } from 'sonner';
 import { TicketResType } from '@/schemaValidations/ticket.schema';
@@ -33,15 +33,23 @@ type Queue = {
 type QueuePayload = { data: Queue };
 type ApiResp<T> = { status: number; payload: T };
 
+const FormSchema = z.object({
+  studentName: z.string().min(1, 'Tên sinh viên không được để trống'),
+  mssv: z.string().min(1, 'MSSV không được để trống'),
+});
+type FormValues = z.infer<typeof FormSchema>;
+
 export default function GetTicketPage() {
   const params = useParams();
   const queueId = params.queueId as string;
+  const search = useSearchParams();
+  const token = search.get('token') ?? '';
   const queryClient = useQueryClient();
   const { socket } = useAppContext();
   const [myTicket, setMyTicket] = useState<Ticket | null>(null);
 
-  const form = useForm<CreateTicketBodyType>({
-    resolver: zodResolver(CreateTicketBody),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       studentName: '',
       mssv: '',
@@ -49,16 +57,16 @@ export default function GetTicketPage() {
   });
 
   const createTicketMutation = useMutation({
-    mutationFn: (body: CreateTicketBodyType) => http.post<TicketResType>(`/queues/${queueId}/tickets`, body),
+    mutationFn: (body: { studentName: string; mssv: string; token: string }) => http.post<TicketResType>(`/queues/${queueId}/tickets`, body),
     onSuccess: (res) => {
       const ticket = res.payload.data;
       setMyTicket(ticket);
       queryClient.invalidateQueries({ queryKey: ['queue', queueId] });
     },
   });
-  async function onSubmit(values: CreateTicketBodyType) {
+  async function onSubmit(values: FormValues) {
     try {
-      const result = await createTicketMutation.mutateAsync(values);
+      const result = await createTicketMutation.mutateAsync({ ...values, token });
       toast.success('Thành công', {
         description: `Bạn đã lấy số thành công! Số của bạn là ${result.payload.data.number}`,
       });
@@ -67,7 +75,21 @@ export default function GetTicketPage() {
       handleErrorApi({ error, setError: form.setError });
     }
   }
-  
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      if (!myTicket) return;
+      await http.post(`/tickets/${myTicket.id}/cancel`, { token });
+    },
+    onSuccess: () => {
+      toast.success('Đã hủy vé');
+      // refetch queue and clear local ticket
+      queryClient.invalidateQueries({ queryKey: ['queue', queueId] });
+      setMyTicket(null);
+    },
+    onError: (error) => handleErrorApi({ error, setError: form.setError }),
+  });
+
   // fetch queue periodically and via socket events
   const { data: queueData } = useQuery<ApiResp<QueuePayload>>({
     queryKey: ['queue', queueId],
@@ -104,7 +126,7 @@ export default function GetTicketPage() {
     const pendingBefore = queue.tickets.filter((t) => t.status === 'pending' && t.number < myTicket.number).length;
     return pendingBefore + 1;
   })();
-  
+
 
   return (
     <div className="flex justify-center items-center min-h-screen">
@@ -151,6 +173,18 @@ export default function GetTicketPage() {
               </p>
               {myTicket.status === 'pending' && position != null && <p>Vị trí trong hàng đang chờ: <strong>{position}</strong></p>}
               {myTicket.status === 'serving' && <p className="text-green-600 font-medium">Đã tới lượt bạn. Vui lòng ra cửa phục vụ.</p>}
+              {myTicket.status === 'pending' && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={cancelMutation.isPending}
+                  onClick={() => {
+                    if (confirm('Bạn có chắc muốn hủy vé này?')) cancelMutation.mutate();
+                  }}
+                >
+                  {cancelMutation.isPending ? 'Đang hủy...' : 'Hủy vé'}
+                </Button>
+              )}
             </div>
           )}
         </CardContent>

@@ -35,14 +35,15 @@ async function bootstrap() {
 
   // 1. Đăng ký các plugin cơ bản
   await fastify.register(cors, {
-    origin: [CLIENT_URL, '*'], // Thêm '*' để cho phép các domain khác
+    // Reflect request origin dynamically to support LAN/mobile access while using credentials
+    origin: true,
     credentials: true,
   });
 
   await fastify.register(socketio, {
     cors: {
-      // Allow Node-based bridges (no browser Origin) and the client URL
-      origin: [CLIENT_URL, '*'],
+      // Allow connections from any origin (mobile/LAN). Socket.IO will echo the origin.
+      origin: true,
       credentials: true,
     },
   });

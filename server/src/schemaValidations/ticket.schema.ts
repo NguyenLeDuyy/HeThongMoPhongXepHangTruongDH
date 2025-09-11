@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const CreateTicketBody = z.object({
   mssv: z.string().min(1, 'MSSV là bắt buộc'),
   studentName: z.string().min(1, 'Tên sinh viên là bắt buộc'),
+  token: z.string().min(1, 'Token QR là bắt buộc'),
 });
 
 export type CreateTicketBodyType = z.infer<typeof CreateTicketBody>;
@@ -14,6 +15,12 @@ export const UpdateTicketStatusBody = z.object({
 });
 
 export type UpdateTicketStatusBodyType = z.infer<typeof UpdateTicketStatusBody>;
+
+export const CancelTicketBody = z.object({
+  token: z.string().min(1, 'Token QR là bắt buộc'),
+});
+
+export type CancelTicketBodyType = z.infer<typeof CancelTicketBody>;
 
 export const TicketIdParam = z.object({
   ticketId: z.string().cuid('ID vé không hợp lệ'),

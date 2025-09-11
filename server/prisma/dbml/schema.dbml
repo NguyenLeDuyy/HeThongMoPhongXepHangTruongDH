@@ -7,6 +7,7 @@ Table Queue {
   name String [not null]
   isOpen Boolean [not null, default: true]
   lastNumber Int [not null, default: 0]
+  token String
   tickets Ticket [not null]
   createdAt DateTime [default: `now()`, not null]
 }

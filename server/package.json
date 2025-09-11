@@ -7,6 +7,7 @@
     "dev": "npx nodemon",
     "build": "rimraf ./dist && tsc && tsc-alias",
     "start": "node dist/index.js",
+    "backfill:queue-token": "ts-node -P tsconfig.json -r tsconfig-paths/register ./scripts/backfill-queue-token.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prettier": "prettier --check .",

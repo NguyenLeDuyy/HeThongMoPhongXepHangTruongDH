@@ -25,6 +25,15 @@ export const handleErrorApi = ({ error, setError, duration }: {
   setError?: UseFormSetError<any>
   duration?: number
 }) => {
+  // Network or CORS error: fetch throws TypeError with message like 'Failed to fetch'
+  if (error instanceof TypeError) {
+    console.error('Network error:', error);
+    toast.error('Không thể kết nối máy chủ', {
+      description: 'Vui lòng kiểm tra mạng/Wi‑Fi và cấu hình API endpoint.',
+      duration: duration ?? 5000
+    });
+    return;
+  }
   if (error instanceof EntityError && setError) {
     error.payload.errors.forEach((item) => {
       setError(item.field, {

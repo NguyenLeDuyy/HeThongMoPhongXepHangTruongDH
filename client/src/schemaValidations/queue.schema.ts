@@ -19,6 +19,7 @@ export const CreateTicketBody = z.object({
   // queueId: z.string(), // remove
   studentName: z.string().min(1, 'Tên sinh viên không được để trống'),
   mssv: z.string().min(1, 'MSSV không được để trống'),
+  token: z.string().min(1, 'Token là bắt buộc'),
 });
 
 export type CreateTicketBodyType = z.infer<typeof CreateTicketBody>;
@@ -36,9 +37,12 @@ export const QueueSchema = z.object({
   name: z.string(),
   isOpen: z.boolean().optional(),
   lastNumber: z.number().optional(),
+  token: z.string().optional(),
   createdAt: z.string().optional(),
   pendingCount: z.number().default(0),
-  servingCount: z.number().default(0)
+  servingCount: z.number().default(0),
+  avgServiceSec: z.number().optional(),
+  estimatedWaitSec: z.number().optional()
 })
 
 export type QueueType = z.infer<typeof QueueSchema>

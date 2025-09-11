@@ -6,7 +6,7 @@ import {
   getQueues,
   updateQueue,
 } from '@/controllers/queue.controller';
-import { resetQueue } from '@/controllers/queue.controller';
+import { resetQueue, rotateQueueToken } from '@/controllers/queue.controller';
 import { CreateQueueBody, QueueIdParam, QueueIdParamType, UpdateQueueBody } from '@/schemaValidations/queue.schema';
 
 export default async function queuesRoutes(fastify: FastifyInstance, options: FastifyPluginOptions) {
@@ -111,6 +111,25 @@ export default async function queuesRoutes(fastify: FastifyInstance, options: Fa
 
       reply.send({
         message: 'Đã reset số thứ tự về ban đầu',
+        data: queue,
+      });
+    },
+  });
+
+  // Đổi mã QR (rotate token) cho một hàng đợi
+  fastify.post('/:queueId/rotate-token', {
+    schema: {
+      tags: ['Queues'],
+      summary: 'Đổi mã QR của hàng đợi (rotate token)',
+      params: QueueIdParam,
+    } as any,
+    handler: async (request: any, reply: any) => {
+      const { queueId } = request.params as QueueIdParamType;
+      const queue = await rotateQueueToken(queueId);
+      // Thông báo realtime nếu cần để UI cập nhật QR/link
+      fastify.emitQueue(queueId, 'queue-token-rotated', { queueId });
+      reply.send({
+        message: 'Đổi mã QR thành công',
         data: queue,
       });
     },
